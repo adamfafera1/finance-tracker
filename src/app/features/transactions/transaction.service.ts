@@ -4,6 +4,9 @@ import {
   CreateTransactionDto,
   CreateTransferDto,
   Transaction,
+  TransferLegs,
+  UpdateTransactionDto,
+  UpdateTransferDto,
 } from '../../shared/models/transaction.model';
 
 @Injectable({ providedIn: 'root' })
@@ -56,7 +59,10 @@ export class TransactionService {
     }
   }
 
-  async createTransaction(dto: CreateTransactionDto): Promise<string | null> {
+  async createTransaction(
+    dto: CreateTransactionDto,
+    options?: { reload?: boolean },
+  ): Promise<string | null> {
     const { data: userData } = await this.supabase.auth.getUser();
     if (!userData.user) return 'Not authenticated';
 
@@ -66,7 +72,9 @@ export class TransactionService {
     });
 
     if (error) return error.message;
-    await this.loadTransactions();
+    if (options?.reload !== false) {
+      await this.loadTransactions();
+    }
     return null;
   }
 
@@ -76,6 +84,61 @@ export class TransactionService {
 
     const { error } = await this.supabase.rpc('create_transfer', {
       p_user_id: userData.user.id,
+      p_from_account_id: dto.from_account_id,
+      p_to_account_id: dto.to_account_id,
+      p_amount: dto.amount,
+      p_description: dto.description ?? null,
+      p_transaction_date: dto.transaction_date,
+    });
+
+    if (error) return error.message;
+    await this.loadTransactions();
+    return null;
+  }
+
+  async updateTransaction(id: string, dto: UpdateTransactionDto): Promise<string | null> {
+    const { error } = await this.supabase
+      .from('transactions')
+      .update({
+        account_id: dto.account_id,
+        category_id: dto.category_id ?? null,
+        amount: dto.amount,
+        type: dto.type,
+        description: dto.description ?? null,
+        transaction_date: dto.transaction_date,
+      })
+      .eq('id', id);
+
+    if (error) return error.message;
+    await this.loadTransactions();
+    return null;
+  }
+
+  async getTransferLegs(pairId: string): Promise<TransferLegs | null> {
+    const { data, error } = await this.supabase
+      .from('transactions')
+      .select('account_id, amount, description, transaction_date, created_at')
+      .eq('transfer_pair_id', pairId)
+      .order('created_at', { ascending: true });
+
+    if (error || !data || data.length < 2) return null;
+
+    return {
+      from_account_id: data[0].account_id,
+      to_account_id: data[1].account_id,
+      amount: Number(data[0].amount),
+      description: data[0].description,
+      transaction_date: data[0].transaction_date,
+    };
+  }
+
+  async updateTransfer(dto: UpdateTransferDto): Promise<string | null> {
+    const { data: userData } = await this.supabase.auth.getUser();
+    if (!userData.user) return 'Not authenticated';
+
+    const { error } = await this.supabase.rpc('update_transfer', {
+      p_user_id: userData.user.id,
+      p_pair_id: dto.pair_id,
       p_from_account_id: dto.from_account_id,
       p_to_account_id: dto.to_account_id,
       p_amount: dto.amount,

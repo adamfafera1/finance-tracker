@@ -7,7 +7,7 @@ export class AppCurrencyPipe implements PipeTransform {
 
   transform(value: number | null | undefined, currency?: string): string {
     if (value == null) return '—';
-    const code = currency ?? this.auth.profile()?.default_currency ?? 'EUR';
+    const code = currency ?? this.auth.defaultCurrency();
     return new Intl.NumberFormat(undefined, {
       style: 'currency',
       currency: code,

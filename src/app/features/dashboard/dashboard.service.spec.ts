@@ -29,6 +29,7 @@ function makeTransaction(overrides: Partial<Transaction> = {}): Transaction {
     description: null,
     transaction_date: new Date().toISOString().split('T')[0],
     transfer_pair_id: null,
+    recurring_transaction_id: null,
     created_at: '',
     ...overrides,
   };

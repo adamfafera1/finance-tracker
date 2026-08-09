@@ -3,11 +3,13 @@ import { Router } from '@angular/router';
 import { Session, User } from '@supabase/supabase-js';
 import { SupabaseService } from '../supabase/supabase.service';
 import { Profile } from '../../shared/models/profile.model';
+import { RecurringTransactionService } from '../../features/recurring/recurring-transaction.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly supabase = inject(SupabaseService).client;
   private readonly router = inject(Router);
+  private readonly recurringService = inject(RecurringTransactionService);
 
   private readonly sessionSignal = signal<Session | null>(null);
   private readonly profileSignal = signal<Profile | null>(null);
@@ -18,6 +20,7 @@ export class AuthService {
   readonly loading = this.loadingSignal.asReadonly();
   readonly user = computed<User | null>(() => this.sessionSignal()?.user ?? null);
   readonly isAuthenticated = computed(() => !!this.sessionSignal());
+  readonly defaultCurrency = computed(() => this.profileSignal()?.default_currency ?? 'EUR');
 
   constructor() {
     this.init();
@@ -28,6 +31,7 @@ export class AuthService {
     this.sessionSignal.set(data.session);
     if (data.session) {
       await this.loadProfile();
+      void this.recurringService.processDue();
     }
     this.loadingSignal.set(false);
 
@@ -35,6 +39,7 @@ export class AuthService {
       this.sessionSignal.set(session);
       if (session) {
         await this.loadProfile();
+        void this.recurringService.processDue();
       } else {
         this.profileSignal.set(null);
       }
@@ -58,6 +63,22 @@ export class AuthService {
   async signOut(): Promise<void> {
     await this.supabase.auth.signOut();
     this.router.navigate(['/auth/login']);
+  }
+
+  async updateDefaultCurrency(currency: string): Promise<string | null> {
+    const userId = this.sessionSignal()?.user?.id;
+    if (!userId) return 'Not authenticated';
+
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .update({ default_currency: currency })
+      .eq('id', userId)
+      .select('*')
+      .single();
+
+    if (error) return error.message;
+    if (data) this.profileSignal.set(data as Profile);
+    return null;
   }
 
   private async loadProfile(): Promise<void> {

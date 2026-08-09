@@ -30,9 +30,24 @@ export const routes: Routes = [
           import('./features/transactions/transactions.component').then((m) => m.TransactionsComponent),
       },
       {
+        path: 'incoming',
+        loadComponent: () =>
+          import('./features/incoming/incoming.component').then((m) => m.IncomingComponent),
+      },
+      {
+        path: 'recurring',
+        loadComponent: () =>
+          import('./features/recurring/recurring.component').then((m) => m.RecurringComponent),
+      },
+      {
         path: 'reports',
         loadComponent: () =>
           import('./features/reports/reports.component').then((m) => m.ReportsComponent),
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./features/settings/settings.component').then((m) => m.SettingsComponent),
       },
     ],
   },

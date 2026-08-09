@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "node scripts/set-env.mjs && ng build",
     "build:mobile": "ng build && npx cap sync",
     "cap:sync": "npx cap sync",
     "cap:open:ios": "npx cap open ios",

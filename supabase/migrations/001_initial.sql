@@ -224,6 +224,7 @@ BEGIN
     (NEW.id, 'Salary', 'income', 'pi pi-wallet', '#22c55e'),
     (NEW.id, 'Freelance', 'income', 'pi pi-briefcase', '#16a34a'),
     (NEW.id, 'Groceries', 'expense', 'pi pi-shopping-cart', '#ef4444'),
+    (NEW.id, 'Fast Food', 'expense', 'pi pi-shopping-bag', '#f43f5e'),
     (NEW.id, 'Rent', 'expense', 'pi pi-home', '#f97316'),
     (NEW.id, 'Transport', 'expense', 'pi pi-car', '#3b82f6'),
     (NEW.id, 'Entertainment', 'expense', 'pi pi-star', '#a855f7'),

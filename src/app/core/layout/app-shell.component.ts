@@ -195,8 +195,11 @@ export class AppShellComponent {
 
   protected readonly navItems: NavItem[] = [
     { label: 'Dashboard', icon: 'pi pi-chart-line', route: '/dashboard' },
+    { label: 'Incoming', icon: 'pi pi-arrow-down-left', route: '/incoming' },
+    { label: 'Recurring', icon: 'pi pi-refresh', route: '/recurring' },
     { label: 'Transactions', icon: 'pi pi-list', route: '/transactions' },
     { label: 'Accounts', icon: 'pi pi-building-columns', route: '/accounts' },
     { label: 'Reports', icon: 'pi pi-chart-pie', route: '/reports' },
+    { label: 'Settings', icon: 'pi pi-cog', route: '/settings' },
   ];
 }

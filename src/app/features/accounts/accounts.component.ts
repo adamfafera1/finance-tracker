@@ -63,11 +63,74 @@ import { AuthService } from '../../core/auth/auth.service';
         <button pButton (click)="openDialog()">Add Account</button>
       </app-empty-state>
     } @else {
-      @if (assets().length) {
+      @if (mainAccounts().length) {
+        <section class="section">
+          <h2>Main Accounts</h2>
+          <div class="account-grid">
+            @for (account of mainAccounts(); track account.id) {
+              <p-card styleClass="account-card account-card--main">
+                <div class="account-card-header">
+                  <div>
+                    <h3>{{ account.name }}</h3>
+                    <div class="account-tags">
+                      <p-tag [value]="typeLabel(account.type)" severity="secondary" />
+                      <p-tag
+                        [value]="account.kind === 'asset' ? 'Asset' : 'Liability'"
+                        [severity]="account.kind === 'asset' ? 'success' : 'warn'"
+                      />
+                    </div>
+                  </div>
+                  <div class="account-actions">
+                    <button
+                      pButton
+                      iconOnly
+                      variant="text"
+                      severity="warn"
+                      aria-label="Remove from main accounts"
+                      (click)="toggleFavorite(account)"
+                    >
+                      <i class="pi pi-star-fill" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      pButton
+                      iconOnly
+                      variant="text"
+                      severity="secondary"
+                      aria-label="Edit account"
+                      (click)="openDialog(account)"
+                    >
+                      <i class="pi pi-pencil" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      pButton
+                      iconOnly
+                      variant="text"
+                      severity="danger"
+                      aria-label="Delete account"
+                      (click)="confirmDelete(account.id, account.name)"
+                    >
+                      <i class="pi pi-trash" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </div>
+                <p
+                  class="balance"
+                  [class.positive]="account.kind === 'asset'"
+                  [class.negative]="account.kind === 'liability'"
+                >
+                  {{ account.balance | appCurrency: account.currency }}
+                </p>
+              </p-card>
+            }
+          </div>
+        </section>
+      }
+
+      @if (otherAssets().length) {
         <section class="section">
           <h2>Assets</h2>
           <div class="account-grid">
-            @for (account of assets(); track account.id) {
+            @for (account of otherAssets(); track account.id) {
               <p-card styleClass="account-card">
                 <div class="account-card-header">
                   <div>
@@ -75,6 +138,16 @@ import { AuthService } from '../../core/auth/auth.service';
                     <p-tag [value]="typeLabel(account.type)" severity="secondary" />
                   </div>
                   <div class="account-actions">
+                    <button
+                      pButton
+                      iconOnly
+                      variant="text"
+                      [severity]="account.is_favorite ? 'warn' : 'secondary'"
+                      [attr.aria-label]="account.is_favorite ? 'Remove from main accounts' : 'Add to main accounts'"
+                      (click)="toggleFavorite(account)"
+                    >
+                      <i [class]="account.is_favorite ? 'pi pi-star-fill' : 'pi pi-star'" aria-hidden="true"></i>
+                    </button>
                     <button
                       pButton
                       iconOnly
@@ -104,11 +177,11 @@ import { AuthService } from '../../core/auth/auth.service';
         </section>
       }
 
-      @if (liabilities().length) {
+      @if (otherLiabilities().length) {
         <section class="section">
           <h2>Liabilities</h2>
           <div class="account-grid">
-            @for (account of liabilities(); track account.id) {
+            @for (account of otherLiabilities(); track account.id) {
               <p-card styleClass="account-card">
                 <div class="account-card-header">
                   <div>
@@ -116,6 +189,16 @@ import { AuthService } from '../../core/auth/auth.service';
                     <p-tag [value]="typeLabel(account.type)" severity="warn" />
                   </div>
                   <div class="account-actions">
+                    <button
+                      pButton
+                      iconOnly
+                      variant="text"
+                      [severity]="account.is_favorite ? 'warn' : 'secondary'"
+                      [attr.aria-label]="account.is_favorite ? 'Remove from main accounts' : 'Add to main accounts'"
+                      (click)="toggleFavorite(account)"
+                    >
+                      <i [class]="account.is_favorite ? 'pi pi-star-fill' : 'pi pi-star'" aria-hidden="true"></i>
+                    </button>
                     <button
                       pButton
                       iconOnly
@@ -252,6 +335,12 @@ import { AuthService } from '../../core/auth/auth.service';
       font-size: 1rem;
     }
 
+    .account-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+    }
+
     .account-actions {
       display: flex;
       gap: 0.25rem;
@@ -322,10 +411,13 @@ export class AccountsComponent implements OnInit {
     balance: [0, Validators.required],
   });
 
-  currency = () => this.auth.profile()?.default_currency ?? 'EUR';
+  currency = () => this.auth.defaultCurrency();
 
-  assets = () => this.accountService.accounts().filter((a) => a.kind === 'asset');
-  liabilities = () => this.accountService.accounts().filter((a) => a.kind === 'liability');
+  mainAccounts = () => this.accountService.favorites();
+  otherAssets = () =>
+    this.accountService.accounts().filter((a) => a.kind === 'asset' && !a.is_favorite);
+  otherLiabilities = () =>
+    this.accountService.accounts().filter((a) => a.kind === 'liability' && !a.is_favorite);
 
   ngOnInit(): void {
     this.accountService.loadAccounts();
@@ -335,7 +427,14 @@ export class AccountsComponent implements OnInit {
     return ACCOUNT_TYPE_LABELS[type];
   }
 
-  openDialog(account?: { id: string; name: string; type: AccountType; kind: AccountKind; balance: number }): void {
+  openDialog(account?: {
+    id: string;
+    name: string;
+    type: AccountType;
+    kind: AccountKind;
+    balance: number;
+    is_favorite?: boolean;
+  }): void {
     if (account) {
       this.editingId.set(account.id);
       this.form.patchValue({
@@ -373,6 +472,22 @@ export class AccountsComponent implements OnInit {
       this.dialogVisible = false;
       this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Account saved successfully' });
     }
+  }
+
+  async toggleFavorite(account: { id: string; is_favorite: boolean; name: string }): Promise<void> {
+    const err = await this.accountService.toggleFavorite(account.id, !account.is_favorite);
+    if (err) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: err });
+      return;
+    }
+
+    this.messageService.add({
+      severity: 'success',
+      summary: account.is_favorite ? 'Removed' : 'Added',
+      detail: account.is_favorite
+        ? `"${account.name}" removed from main accounts`
+        : `"${account.name}" added to main accounts`,
+    });
   }
 
   confirmDelete(id: string, name: string): void {

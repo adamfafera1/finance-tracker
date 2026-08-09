@@ -1,5 +1,12 @@
 @import 'primeicons/primeicons.css';
 
+:root {
+  --app-font-family:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --p-font-family: var(--app-font-family);
+}
+
 *,
 *::before,
 *::after {
@@ -11,10 +18,11 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100dvh;
-  font-family: var(--p-font-family);
+  font-family: var(--app-font-family);
   background: var(--p-surface-50);
   color: var(--p-text-color);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html.app-dark body {
@@ -37,6 +45,8 @@ a {
 .page-header h1 {
   margin: 0;
   font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .stat-grid {
@@ -61,7 +71,9 @@ a {
 .stat-card .value {
   margin: 0;
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-card .value.positive {
@@ -76,20 +88,4 @@ a {
   display: flex;
   justify-content: center;
   padding: 3rem;
-}
-
-.fab {
-  position: fixed;
-  bottom: calc(4.5rem + env(safe-area-inset-bottom));
-  right: 1rem;
-  z-index: 50;
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 50%;
-}
-
-@media (min-width: 768px) {
-  .fab {
-    bottom: 1.5rem;
-  }
 }
