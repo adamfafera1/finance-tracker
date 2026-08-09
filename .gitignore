@@ -39,6 +39,5 @@ testem.log
 /typings
 __screenshots__/
 
-# System files
-.DS_Store
-Thumbs.db
+# Environment secrets
+src/environments/environment.ts
