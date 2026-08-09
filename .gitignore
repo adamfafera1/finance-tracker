@@ -41,3 +41,5 @@ __screenshots__/
 
 # Environment secrets
 src/environments/environment.ts
+.vercel
+.env*
