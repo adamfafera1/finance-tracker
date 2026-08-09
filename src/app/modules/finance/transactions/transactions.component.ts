@@ -20,13 +20,14 @@ import { AccountService } from '../accounts/account.service';
 
 import { CategoryService } from '../categories/category.service';
 
-import { Transaction } from '../../shared/models/transaction.model';
+import { Transaction } from '../../../shared/models/transaction.model';
 
-import { EmptyStateComponent } from '../../shared/components/empty-state.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state.component';
 
-import { TransactionListComponent } from '../../shared/components/transaction-list.component';
+import { TransactionListComponent } from '../../../shared/components/transaction-list.component';
 
-import { TransactionFormDialogComponent } from '../../shared/components/transaction-form-dialog.component';
+import { TransactionFormDialogComponent } from '../../../shared/components/transaction-form-dialog.component';
+import { collapseTransferPairs } from '../../../shared/utils/transfer-display';
 
 
 
@@ -207,15 +208,10 @@ export class TransactionsComponent implements OnInit {
 
 
   filteredTransactions = () => {
-
     const txs = this.transactionService.transactions();
-
     const filter = this.selectedFilter();
-
-    if (filter === 'all') return txs;
-
-    return txs.filter((t) => t.type === filter);
-
+    const filtered = filter === 'all' ? txs : txs.filter((t) => t.type === filter);
+    return collapseTransferPairs(filtered);
   };
 
 

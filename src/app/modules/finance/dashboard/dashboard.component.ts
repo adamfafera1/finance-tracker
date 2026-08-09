@@ -11,10 +11,11 @@ import { MessageService } from 'primeng/api';
 import { DashboardService } from './dashboard.service';
 import { AccountService } from '../accounts/account.service';
 import { TransactionService } from '../transactions/transaction.service';
-import { ACCOUNT_TYPE_LABELS, Account } from '../../shared/models/account.model';
-import { AppCurrencyPipe } from '../../shared/pipes/app-currency.pipe';
-import { EmptyStateComponent } from '../../shared/components/empty-state.component';
-import { AuthService } from '../../core/auth/auth.service';
+import { ACCOUNT_TYPE_LABELS, Account } from '../../../shared/models/account.model';
+import { AppCurrencyPipe } from '../../../shared/pipes/app-currency.pipe';
+import { EmptyStateComponent } from '../../../shared/components/empty-state.component';
+import { AuthService } from '../../../core/auth/auth.service';
+import { TransferDisplayTransaction } from '../../../shared/utils/transfer-display';
 
 @Component({
   selector: 'app-dashboard',
@@ -64,7 +65,7 @@ import { AuthService } from '../../core/auth/auth.service';
             title="No accounts yet"
             message="Add accounts first, then pin your main ones here."
           >
-            <a routerLink="/accounts" pButton>Add Account</a>
+            <a routerLink="/finance/accounts" pButton>Add Account</a>
           </app-empty-state>
         } @else if (accountService.favorites().length === 0) {
           <app-empty-state
@@ -156,7 +157,7 @@ import { AuthService } from '../../core/auth/auth.service';
       <section class="section">
         <div class="section-header">
           <h2>Recent Transactions</h2>
-          <a routerLink="/transactions" pButton variant="text">View all</a>
+          <a routerLink="/finance/transactions" pButton variant="text">View all</a>
         </div>
 
         @if (recent().length === 0) {
@@ -165,16 +166,16 @@ import { AuthService } from '../../core/auth/auth.service';
             title="No transactions yet"
             message="Start logging your income and expenses to see activity here."
           >
-            <a routerLink="/transactions" pButton>Add Transaction</a>
+            <a routerLink="/finance/transactions" pButton>Add Transaction</a>
           </app-empty-state>
         } @else {
           <div class="tx-list">
-            @for (tx of recent(); track tx.id) {
+            @for (tx of recent(); track tx.transfer_pair_id ?? tx.id) {
               <div class="tx-item">
                 <div class="tx-info">
                   <span class="tx-desc">{{ tx.description || tx.category?.name || 'Transfer' }}</span>
                   <span class="tx-meta">
-                    {{ tx.account?.name }} · {{ tx.transaction_date | date: 'mediumDate' }}
+                    {{ transferMeta(tx) }} · {{ tx.transaction_date | date: 'mediumDate' }}
                   </span>
                 </div>
                 <div class="tx-right">
@@ -441,6 +442,15 @@ export class DashboardComponent implements OnInit {
   }
 
   recent = () => this.transactionService.recent(5);
+
+  transferMeta(tx: TransferDisplayTransaction): string {
+    if (tx.type === 'transfer') {
+      const from = tx.transfer_from_name ?? tx.account?.name ?? 'Account';
+      const to = tx.transfer_to_name;
+      return to ? `${from} → ${to}` : from;
+    }
+    return tx.account?.name ?? 'Account';
+  }
 
   typeLabel(type: Account['type']): string {
     return ACCOUNT_TYPE_LABELS[type];

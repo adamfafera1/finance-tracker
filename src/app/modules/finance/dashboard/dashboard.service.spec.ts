@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DashboardService } from './dashboard.service';
-import { Account } from '../../shared/models/account.model';
-import { Transaction } from '../../shared/models/transaction.model';
+import { Account } from '../../../shared/models/account.model';
+import { Transaction } from '../../../shared/models/transaction.model';
 
 function makeAccount(overrides: Partial<Account> = {}): Account {
   return {

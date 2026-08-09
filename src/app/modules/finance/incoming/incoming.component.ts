@@ -8,11 +8,11 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { TransactionService } from '../transactions/transaction.service';
 import { AccountService } from '../accounts/account.service';
 import { CategoryService } from '../categories/category.service';
-import { Transaction } from '../../shared/models/transaction.model';
-import { AppCurrencyPipe } from '../../shared/pipes/app-currency.pipe';
-import { EmptyStateComponent } from '../../shared/components/empty-state.component';
-import { TransactionListComponent } from '../../shared/components/transaction-list.component';
-import { TransactionFormDialogComponent } from '../../shared/components/transaction-form-dialog.component';
+import { Transaction } from '../../../shared/models/transaction.model';
+import { AppCurrencyPipe } from '../../../shared/pipes/app-currency.pipe';
+import { EmptyStateComponent } from '../../../shared/components/empty-state.component';
+import { TransactionListComponent } from '../../../shared/components/transaction-list.component';
+import { TransactionFormDialogComponent } from '../../../shared/components/transaction-form-dialog.component';
 
 @Component({
   selector: 'app-incoming',

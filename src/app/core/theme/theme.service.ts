@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 
-const THEME_KEY = 'finance-tracker-theme';
+const THEME_KEY = 'lifefe-theme';
+const LEGACY_THEME_KEY = 'finance-tracker-theme';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
@@ -19,7 +20,7 @@ export class ThemeService {
   }
 
   private getInitialTheme(): boolean {
-    const stored = localStorage.getItem(THEME_KEY);
+    const stored = localStorage.getItem(THEME_KEY) ?? localStorage.getItem(LEGACY_THEME_KEY);
     if (stored) return stored === 'dark';
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   }

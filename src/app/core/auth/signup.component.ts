@@ -21,9 +21,9 @@ import { AuthService } from './auth.service';
     <div class="auth-page">
       <div class="auth-card">
         <div class="auth-header">
-          <i class="pi pi-wallet auth-logo" aria-hidden="true"></i>
+          <i class="pi pi-heart auth-logo" aria-hidden="true"></i>
           <h1>Create Account</h1>
-          <p>Start tracking your net worth today</p>
+          <p>Start your Lifefe companion</p>
         </div>
 
         @if (error()) {

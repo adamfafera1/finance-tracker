@@ -4,16 +4,16 @@ import { ChartModule } from 'primeng/chart';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DashboardService } from '../dashboard/dashboard.service';
 import { TransactionService } from '../transactions/transaction.service';
-import { AuthService } from '../../core/auth/auth.service';
-import { ThemeService } from '../../core/theme/theme.service';
-import { AppCurrencyPipe } from '../../shared/pipes/app-currency.pipe';
-import { EmptyStateComponent } from '../../shared/components/empty-state.component';
+import { AuthService } from '../../../core/auth/auth.service';
+import { ThemeService } from '../../../core/theme/theme.service';
+import { AppCurrencyPipe } from '../../../shared/pipes/app-currency.pipe';
+import { EmptyStateComponent } from '../../../shared/components/empty-state.component';
 import {
   chartLayoutPadding,
   formatChartCurrency,
   readChartThemeColors,
   withAlpha,
-} from '../../shared/utils/chart-theme';
+} from '../../../shared/utils/chart-theme';
 
 @Component({
   selector: 'app-reports',

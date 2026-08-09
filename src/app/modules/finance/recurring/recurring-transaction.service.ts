@@ -1,11 +1,11 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { SupabaseService } from '../../core/supabase/supabase.service';
+import { SupabaseService } from '../../../core/supabase/supabase.service';
 import {
   CreateRecurringTransactionDto,
   RecurringTransaction,
-} from '../../shared/models/recurring-transaction.model';
-import { advanceRecurringDate, todayIso } from '../../shared/utils/recurrence';
-import { resolveRecurringItemType, resolveRecurringTransactionType, withResolvedType } from '../../shared/utils/recurring-type';
+} from '../../../shared/models/recurring-transaction.model';
+import { advanceRecurringDate, todayIso } from '../../../shared/utils/recurrence';
+import { resolveRecurringItemType, resolveRecurringTransactionType, withResolvedType } from '../../../shared/utils/recurring-type';
 import { AccountService } from '../accounts/account.service';
 import { CategoryService } from '../categories/category.service';
 import { TransactionService } from '../transactions/transaction.service';

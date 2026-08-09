@@ -1,11 +1,11 @@
 {
-  "name": "finance-tracker",
+  "name": "lifefe",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "node scripts/set-env.mjs && ng build",
-    "build:mobile": "ng build && npx cap sync",
+    "build:mobile": "node scripts/set-env.mjs && ng build && npx cap sync",
     "cap:sync": "npx cap sync",
     "cap:open:ios": "npx cap open ios",
     "cap:open:android": "npx cap open android",

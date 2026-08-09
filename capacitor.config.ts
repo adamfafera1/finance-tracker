@@ -2,8 +2,8 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.financetracker.app',
-  appName: 'Finance Tracker',
-  webDir: 'dist/finance-tracker/browser',
+  appName: 'Lifefe',
+  webDir: 'dist/lifefe/browser',
   server: {
     androidScheme: 'https',
   },

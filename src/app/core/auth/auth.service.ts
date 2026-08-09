@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { Session, User } from '@supabase/supabase-js';
 import { SupabaseService } from '../supabase/supabase.service';
 import { Profile } from '../../shared/models/profile.model';
-import { RecurringTransactionService } from '../../features/recurring/recurring-transaction.service';
+import { RecurringTransactionService } from '../../modules/finance/recurring/recurring-transaction.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {

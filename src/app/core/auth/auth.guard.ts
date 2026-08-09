@@ -30,7 +30,7 @@ export const guestGuard: CanActivateFn = () => {
     return new Promise<boolean | ReturnType<Router['createUrlTree']>>((resolve) => {
       const check = () => {
         if (!auth.loading()) {
-          resolve(auth.isAuthenticated() ? router.createUrlTree(['/dashboard']) : true);
+          resolve(auth.isAuthenticated() ? router.createUrlTree(['/home']) : true);
         } else {
           setTimeout(check, 50);
         }
@@ -39,5 +39,5 @@ export const guestGuard: CanActivateFn = () => {
     });
   }
 
-  return auth.isAuthenticated() ? router.createUrlTree(['/dashboard']) : true;
+  return auth.isAuthenticated() ? router.createUrlTree(['/home']) : true;
 };

@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "finance-tracker": {
+    "lifefe": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -57,10 +57,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "finance-tracker:build:production"
+              "buildTarget": "lifefe:build:production"
             },
             "development": {
-              "buildTarget": "finance-tracker:build:development"
+              "buildTarget": "lifefe:build:development"
             }
           },
           "defaultConfiguration": "development"

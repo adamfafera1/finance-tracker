@@ -13,43 +13,30 @@ export const routes: Routes = [
       import('./core/layout/app-shell.component').then((m) => m.AppShellComponent),
     canActivate: [authGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: '', redirectTo: 'home', pathMatch: 'full' },
       {
-        path: 'dashboard',
+        path: 'home',
         loadComponent: () =>
-          import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+          import('./features/home/home.component').then((m) => m.HomeComponent),
       },
       {
-        path: 'accounts',
-        loadComponent: () =>
-          import('./features/accounts/accounts.component').then((m) => m.AccountsComponent),
-      },
-      {
-        path: 'transactions',
-        loadComponent: () =>
-          import('./features/transactions/transactions.component').then((m) => m.TransactionsComponent),
-      },
-      {
-        path: 'incoming',
-        loadComponent: () =>
-          import('./features/incoming/incoming.component').then((m) => m.IncomingComponent),
-      },
-      {
-        path: 'recurring',
-        loadComponent: () =>
-          import('./features/recurring/recurring.component').then((m) => m.RecurringComponent),
-      },
-      {
-        path: 'reports',
-        loadComponent: () =>
-          import('./features/reports/reports.component').then((m) => m.ReportsComponent),
+        path: 'finance',
+        loadChildren: () =>
+          import('./modules/finance/finance.routes').then((m) => m.financeRoutes),
       },
       {
         path: 'settings',
         loadComponent: () =>
           import('./features/settings/settings.component').then((m) => m.SettingsComponent),
       },
+      // Legacy redirects from pre-Lifefe routes
+      { path: 'dashboard', redirectTo: 'finance/dashboard', pathMatch: 'full' },
+      { path: 'accounts', redirectTo: 'finance/accounts', pathMatch: 'full' },
+      { path: 'transactions', redirectTo: 'finance/transactions', pathMatch: 'full' },
+      { path: 'incoming', redirectTo: 'finance/incoming', pathMatch: 'full' },
+      { path: 'recurring', redirectTo: 'finance/recurring', pathMatch: 'full' },
+      { path: 'reports', redirectTo: 'finance/reports', pathMatch: 'full' },
     ],
   },
-  { path: '**', redirectTo: 'dashboard' },
+  { path: '**', redirectTo: 'home' },
 ];
