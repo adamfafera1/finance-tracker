@@ -5,6 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AuthService } from '../../core/auth/auth.service';
 import { DashboardService } from '../../modules/finance/dashboard/dashboard.service';
+import { TodoService } from '../../modules/todo/todo.service';
 import { AppCurrencyPipe } from '../../shared/pipes/app-currency.pipe';
 
 @Component({
@@ -46,7 +47,7 @@ import { AppCurrencyPipe } from '../../shared/pipes/app-currency.pipe';
             <a routerLink="/finance/dashboard" pButton class="module-cta">Open Finance</a>
           </p-card>
 
-          <p-card styleClass="module-card coming-soon">
+          <p-card styleClass="module-card">
             <div class="module-header">
               <div>
                 <span class="module-label">Tasks</span>
@@ -54,7 +55,10 @@ import { AppCurrencyPipe } from '../../shared/pipes/app-currency.pipe';
               </div>
               <i class="pi pi-check-square module-icon" aria-hidden="true"></i>
             </div>
-            <p class="placeholder">Coming soon</p>
+            <p class="module-meta-line">
+              {{ todoService.activeCount() }} active · {{ todoService.completedCount() }} completed
+            </p>
+            <a routerLink="/todo/active" pButton class="module-cta">Open Tasks</a>
           </p-card>
 
           <p-card styleClass="module-card coming-soon">
@@ -167,6 +171,13 @@ import { AppCurrencyPipe } from '../../shared/pipes/app-currency.pipe';
       color: var(--p-text-muted-color);
     }
 
+    .module-meta-line {
+      margin: 0 0 1rem;
+      font-size: 0.875rem;
+      color: var(--p-text-muted-color);
+      min-height: 1.25rem;
+    }
+
     .module-cta {
       width: 100%;
       justify-content: center;
@@ -196,12 +207,13 @@ import { AppCurrencyPipe } from '../../shared/pipes/app-currency.pipe';
 export class HomeComponent implements OnInit {
   protected readonly auth = inject(AuthService);
   protected readonly dashboard = inject(DashboardService);
+  protected readonly todoService = inject(TodoService);
 
   protected readonly loading = signal(true);
 
   async ngOnInit(): Promise<void> {
     this.loading.set(true);
-    await this.dashboard.refresh();
+    await Promise.all([this.dashboard.refresh(), this.todoService.loadTodos()]);
     this.loading.set(false);
   }
 }

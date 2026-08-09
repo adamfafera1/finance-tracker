@@ -27,7 +27,7 @@ interface NavItem {
             <a
               [routerLink]="item.route"
               routerLinkActive="active"
-              [routerLinkActiveOptions]="item.route === '/finance' ? { exact: false } : { exact: true }"
+              [routerLinkActiveOptions]="isModuleRoute(item.route) ? { exact: false } : { exact: true }"
               class="nav-link"
             >
               <i [class]="item.icon" aria-hidden="true"></i>
@@ -39,6 +39,18 @@ interface NavItem {
             <div class="nav-section">
               <span class="nav-section-label">Finance</span>
               @for (item of financeNav; track item.route) {
+                <a [routerLink]="item.route" routerLinkActive="active" class="nav-link nav-link-sub">
+                  <i [class]="item.icon" aria-hidden="true"></i>
+                  <span>{{ item.label }}</span>
+                </a>
+              }
+            </div>
+          }
+
+          @if (inTodo()) {
+            <div class="nav-section">
+              <span class="nav-section-label">Tasks</span>
+              @for (item of todoNav; track item.route) {
                 <a [routerLink]="item.route" routerLinkActive="active" class="nav-link nav-link-sub">
                   <i [class]="item.icon" aria-hidden="true"></i>
                   <span>{{ item.label }}</span>
@@ -68,12 +80,12 @@ interface NavItem {
         <router-outlet />
       </main>
 
-      <nav class="bottom-nav" [class.with-subnav]="inFinance()">
+      <nav class="bottom-nav" [class.with-subnav]="showModuleSubnav()">
         @for (item of primaryNav; track item.route) {
           <a
             [routerLink]="item.route"
             routerLinkActive="active"
-            [routerLinkActiveOptions]="item.route === '/finance' ? { exact: false } : { exact: true }"
+            [routerLinkActiveOptions]="isModuleRoute(item.route) ? { exact: false } : { exact: true }"
             class="bottom-link"
           >
             <i [class]="item.icon" aria-hidden="true"></i>
@@ -83,8 +95,18 @@ interface NavItem {
       </nav>
 
       @if (inFinance()) {
-        <nav class="finance-subnav" aria-label="Finance sections">
+        <nav class="module-subnav" aria-label="Finance sections">
           @for (item of financeNav; track item.route) {
+            <a [routerLink]="item.route" routerLinkActive="active" class="subnav-link">
+              {{ item.label }}
+            </a>
+          }
+        </nav>
+      }
+
+      @if (inTodo()) {
+        <nav class="module-subnav" aria-label="Task sections">
+          @for (item of todoNav; track item.route) {
             <a [routerLink]="item.route" routerLinkActive="active" class="subnav-link">
               {{ item.label }}
             </a>
@@ -235,7 +257,7 @@ interface NavItem {
       font-weight: 500;
     }
 
-    .finance-subnav {
+    .module-subnav {
       position: fixed;
       bottom: calc(3.25rem + env(safe-area-inset-bottom));
       left: 0;
@@ -270,8 +292,8 @@ interface NavItem {
       background: color-mix(in srgb, var(--p-primary-color) 15%, transparent);
     }
 
-    .main-content:has(+ .finance-subnav),
-    .shell:has(.finance-subnav) .main-content {
+    .main-content:has(+ .module-subnav),
+    .shell:has(.module-subnav) .main-content {
       padding-bottom: calc(7rem + env(safe-area-inset-bottom));
     }
 
@@ -281,7 +303,7 @@ interface NavItem {
       }
 
       .bottom-nav,
-      .finance-subnav {
+      .module-subnav {
         display: none;
       }
 
@@ -307,10 +329,13 @@ export class AppShellComponent {
   );
 
   protected readonly inFinance = computed(() => this.url().startsWith('/finance'));
+  protected readonly inTodo = computed(() => this.url().startsWith('/todo'));
+  protected readonly showModuleSubnav = computed(() => this.inFinance() || this.inTodo());
 
   protected readonly primaryNav: NavItem[] = [
     { label: 'Home', icon: 'pi pi-home', route: '/home' },
     { label: 'Finance', icon: 'pi pi-wallet', route: '/finance' },
+    { label: 'Tasks', icon: 'pi pi-check-square', route: '/todo' },
     { label: 'Settings', icon: 'pi pi-cog', route: '/settings' },
   ];
 
@@ -322,4 +347,13 @@ export class AppShellComponent {
     { label: 'Accounts', icon: 'pi pi-building-columns', route: '/finance/accounts' },
     { label: 'Reports', icon: 'pi pi-chart-pie', route: '/finance/reports' },
   ];
+
+  protected readonly todoNav: NavItem[] = [
+    { label: 'Active', icon: 'pi pi-list', route: '/todo/active' },
+    { label: 'Completed', icon: 'pi pi-check', route: '/todo/completed' },
+  ];
+
+  protected isModuleRoute(route: string): boolean {
+    return route === '/finance' || route === '/todo';
+  }
 }

@@ -25,6 +25,11 @@ export const routes: Routes = [
           import('./modules/finance/finance.routes').then((m) => m.financeRoutes),
       },
       {
+        path: 'todo',
+        loadChildren: () =>
+          import('./modules/todo/todo.routes').then((m) => m.todoRoutes),
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./features/settings/settings.component').then((m) => m.SettingsComponent),
