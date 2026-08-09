@@ -17,18 +17,18 @@ import { FormsModule } from '@angular/forms';
 import { RecurringTransactionService } from './recurring-transaction.service';
 import { AccountService } from '../accounts/account.service';
 import { CategoryService } from '../categories/category.service';
-import { AuthService } from '../../core/auth/auth.service';
+import { AuthService } from '../../../core/auth/auth.service';
 import {
   FREQUENCY_LABELS,
   RecurringFrequency,
   RecurringTransaction,
-} from '../../shared/models/recurring-transaction.model';
-import { TransactionType } from '../../shared/models/transaction.model';
-import { AppCurrencyPipe } from '../../shared/pipes/app-currency.pipe';
-import { EmptyStateComponent } from '../../shared/components/empty-state.component';
-import { frequencyLabel } from '../../shared/utils/recurrence';
-import { parseLocalIsoDate, toLocalIsoDate } from '../../shared/utils/date';
-import { resolveRecurringItemType } from '../../shared/utils/recurring-type';
+} from '../../../shared/models/recurring-transaction.model';
+import { TransactionType } from '../../../shared/models/transaction.model';
+import { AppCurrencyPipe } from '../../../shared/pipes/app-currency.pipe';
+import { EmptyStateComponent } from '../../../shared/components/empty-state.component';
+import { frequencyLabel } from '../../../shared/utils/recurrence';
+import { parseLocalIsoDate, toLocalIsoDate } from '../../../shared/utils/date';
+import { resolveRecurringItemType } from '../../../shared/utils/recurring-type';
 
 @Component({
   selector: 'app-recurring',

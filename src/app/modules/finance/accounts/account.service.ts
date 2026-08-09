@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { SupabaseService } from '../../core/supabase/supabase.service';
-import { Account, CreateAccountDto } from '../../shared/models/account.model';
+import { SupabaseService } from '../../../core/supabase/supabase.service';
+import { Account, CreateAccountDto } from '../../../shared/models/account.model';
 
 @Injectable({ providedIn: 'root' })
 export class AccountService {

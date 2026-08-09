@@ -17,10 +17,10 @@ import {
   AccountKind,
   AccountType,
   CreateAccountDto,
-} from '../../shared/models/account.model';
-import { AppCurrencyPipe } from '../../shared/pipes/app-currency.pipe';
-import { EmptyStateComponent } from '../../shared/components/empty-state.component';
-import { AuthService } from '../../core/auth/auth.service';
+} from '../../../shared/models/account.model';
+import { AppCurrencyPipe } from '../../../shared/pipes/app-currency.pipe';
+import { EmptyStateComponent } from '../../../shared/components/empty-state.component';
+import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-accounts',

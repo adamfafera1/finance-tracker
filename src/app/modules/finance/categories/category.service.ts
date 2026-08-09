@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { SupabaseService } from '../../core/supabase/supabase.service';
-import { Category, CategoryType } from '../../shared/models/category.model';
+import { SupabaseService } from '../../../core/supabase/supabase.service';
+import { Category, CategoryType } from '../../../shared/models/category.model';
 
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
@@ -28,6 +28,6 @@ export class CategoryService {
   }
 
   byType(type: CategoryType): Category[] {
-    return this.categoriesSignal().filter((c) => c.type === type);
+    return this.categories().filter((c) => c.type === type);
   }
 }

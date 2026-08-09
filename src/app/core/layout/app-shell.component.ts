@@ -1,5 +1,7 @@
-import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter, map, startWith } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { AuthService } from '../auth/auth.service';
 import { ThemeService } from '../theme/theme.service';
@@ -17,15 +19,32 @@ interface NavItem {
     <div class="shell">
       <aside class="sidebar">
         <div class="brand">
-          <i class="pi pi-wallet" aria-hidden="true"></i>
-          <span>Finance Tracker</span>
+          <i class="pi pi-heart" aria-hidden="true"></i>
+          <span>Lifefe</span>
         </div>
         <nav class="sidebar-nav">
-          @for (item of navItems; track item.route) {
-            <a [routerLink]="item.route" routerLinkActive="active" class="nav-link">
+          @for (item of primaryNav; track item.route) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="item.route === '/finance' ? { exact: false } : { exact: true }"
+              class="nav-link"
+            >
               <i [class]="item.icon" aria-hidden="true"></i>
               <span>{{ item.label }}</span>
             </a>
+          }
+
+          @if (inFinance()) {
+            <div class="nav-section">
+              <span class="nav-section-label">Finance</span>
+              @for (item of financeNav; track item.route) {
+                <a [routerLink]="item.route" routerLinkActive="active" class="nav-link nav-link-sub">
+                  <i [class]="item.icon" aria-hidden="true"></i>
+                  <span>{{ item.label }}</span>
+                </a>
+              }
+            </div>
           }
         </nav>
         <div class="sidebar-footer">
@@ -49,14 +68,29 @@ interface NavItem {
         <router-outlet />
       </main>
 
-      <nav class="bottom-nav">
-        @for (item of navItems; track item.route) {
-          <a [routerLink]="item.route" routerLinkActive="active" class="bottom-link">
+      <nav class="bottom-nav" [class.with-subnav]="inFinance()">
+        @for (item of primaryNav; track item.route) {
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="item.route === '/finance' ? { exact: false } : { exact: true }"
+            class="bottom-link"
+          >
             <i [class]="item.icon" aria-hidden="true"></i>
             <span>{{ item.label }}</span>
           </a>
         }
       </nav>
+
+      @if (inFinance()) {
+        <nav class="finance-subnav" aria-label="Finance sections">
+          @for (item of financeNav; track item.route) {
+            <a [routerLink]="item.route" routerLinkActive="active" class="subnav-link">
+              {{ item.label }}
+            </a>
+          }
+        </nav>
+      }
     </div>
   `,
   styles: `
@@ -80,8 +114,9 @@ interface NavItem {
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      font-size: 1.125rem;
-      font-weight: 600;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
       padding: 0 0.5rem 1.5rem;
       color: var(--p-primary-color);
     }
@@ -93,6 +128,24 @@ interface NavItem {
       gap: 0.25rem;
     }
 
+    .nav-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--p-content-border-color);
+    }
+
+    .nav-section-label {
+      padding: 0 1rem 0.375rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--p-text-muted-color);
+    }
+
     .nav-link {
       display: flex;
       align-items: center;
@@ -102,6 +155,11 @@ interface NavItem {
       color: var(--p-text-muted-color);
       text-decoration: none;
       transition: background 0.15s, color 0.15s;
+    }
+
+    .nav-link-sub {
+      padding: 0.5rem 1rem 0.5rem 1.25rem;
+      font-size: 0.9375rem;
     }
 
     .nav-link:hover {
@@ -152,6 +210,10 @@ interface NavItem {
       z-index: 100;
     }
 
+    .bottom-nav.with-subnav {
+      padding-bottom: calc(2.75rem + 0.5rem + env(safe-area-inset-bottom));
+    }
+
     .bottom-link {
       display: flex;
       flex-direction: column;
@@ -173,12 +235,53 @@ interface NavItem {
       font-weight: 500;
     }
 
+    .finance-subnav {
+      position: fixed;
+      bottom: calc(3.25rem + env(safe-area-inset-bottom));
+      left: 0;
+      right: 0;
+      display: flex;
+      gap: 0.25rem;
+      overflow-x: auto;
+      background: var(--p-content-background);
+      border-top: 1px solid var(--p-content-border-color);
+      padding: 0.375rem 0.75rem;
+      z-index: 99;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .subnav-link {
+      flex-shrink: 0;
+      padding: 0.375rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      color: var(--p-text-muted-color);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .subnav-link.active {
+      background: var(--p-primary-50);
+      color: var(--p-primary-color);
+      font-weight: 500;
+    }
+
+    :host-context(.app-dark) .subnav-link.active {
+      background: color-mix(in srgb, var(--p-primary-color) 15%, transparent);
+    }
+
+    .main-content:has(+ .finance-subnav),
+    .shell:has(.finance-subnav) .main-content {
+      padding-bottom: calc(7rem + env(safe-area-inset-bottom));
+    }
+
     @media (min-width: 768px) {
       .sidebar {
         display: flex;
       }
 
-      .bottom-nav {
+      .bottom-nav,
+      .finance-subnav {
         display: none;
       }
 
@@ -192,14 +295,31 @@ interface NavItem {
 export class AppShellComponent {
   protected readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);
+  private readonly router = inject(Router);
 
-  protected readonly navItems: NavItem[] = [
-    { label: 'Dashboard', icon: 'pi pi-chart-line', route: '/dashboard' },
-    { label: 'Incoming', icon: 'pi pi-arrow-down-left', route: '/incoming' },
-    { label: 'Recurring', icon: 'pi pi-refresh', route: '/recurring' },
-    { label: 'Transactions', icon: 'pi pi-list', route: '/transactions' },
-    { label: 'Accounts', icon: 'pi pi-building-columns', route: '/accounts' },
-    { label: 'Reports', icon: 'pi pi-chart-pie', route: '/reports' },
+  private readonly url = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(() => this.router.url),
+      startWith(this.router.url),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  protected readonly inFinance = computed(() => this.url().startsWith('/finance'));
+
+  protected readonly primaryNav: NavItem[] = [
+    { label: 'Home', icon: 'pi pi-home', route: '/home' },
+    { label: 'Finance', icon: 'pi pi-wallet', route: '/finance' },
     { label: 'Settings', icon: 'pi pi-cog', route: '/settings' },
+  ];
+
+  protected readonly financeNav: NavItem[] = [
+    { label: 'Dashboard', icon: 'pi pi-chart-line', route: '/finance/dashboard' },
+    { label: 'Incoming', icon: 'pi pi-arrow-down-left', route: '/finance/incoming' },
+    { label: 'Recurring', icon: 'pi pi-refresh', route: '/finance/recurring' },
+    { label: 'Transactions', icon: 'pi pi-list', route: '/finance/transactions' },
+    { label: 'Accounts', icon: 'pi pi-building-columns', route: '/finance/accounts' },
+    { label: 'Reports', icon: 'pi pi-chart-pie', route: '/finance/reports' },
   ];
 }

@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { SupabaseService } from '../../core/supabase/supabase.service';
+import { SupabaseService } from '../../../core/supabase/supabase.service';
 import {
   CreateTransactionDto,
   CreateTransferDto,
@@ -7,7 +7,8 @@ import {
   TransferLegs,
   UpdateTransactionDto,
   UpdateTransferDto,
-} from '../../shared/models/transaction.model';
+} from '../../../shared/models/transaction.model';
+import { collapseTransferPairs } from '../../../shared/utils/transfer-display';
 
 @Injectable({ providedIn: 'root' })
 export class TransactionService {
@@ -172,7 +173,7 @@ export class TransactionService {
     return null;
   }
 
-  recent(limit = 5): Transaction[] {
-    return this.transactionsSignal().slice(0, limit);
+  recent(limit = 5): ReturnType<typeof collapseTransferPairs> {
+    return collapseTransferPairs(this.transactionsSignal()).slice(0, limit);
   }
 }

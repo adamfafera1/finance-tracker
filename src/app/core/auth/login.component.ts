@@ -21,9 +21,9 @@ import { AuthService } from './auth.service';
     <div class="auth-page">
       <div class="auth-card">
         <div class="auth-header">
-          <i class="pi pi-wallet auth-logo" aria-hidden="true"></i>
-          <h1>Finance Tracker</h1>
-          <p>Sign in to manage your finances</p>
+          <i class="pi pi-heart auth-logo" aria-hidden="true"></i>
+          <h1>Lifefe</h1>
+          <p>Sign in to your life companion</p>
         </div>
 
         @if (error()) {
@@ -157,7 +157,7 @@ export class LoginComponent {
     if (err) {
       this.error.set(err);
     } else {
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/home']);
     }
   }
 }

@@ -4,18 +4,19 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { Transaction } from '../models/transaction.model';
 import { AppCurrencyPipe } from '../pipes/app-currency.pipe';
+import { TransferDisplayTransaction } from '../utils/transfer-display';
 
 @Component({
   selector: 'app-transaction-list',
   imports: [DatePipe, ButtonModule, TagModule, AppCurrencyPipe],
   template: `
     <div class="tx-list">
-      @for (tx of transactions(); track tx.id) {
+      @for (tx of transactions(); track trackId(tx)) {
         <div class="tx-item">
           <div class="tx-info">
-            <span class="tx-desc">{{ tx.description || tx.category?.name || 'Transfer' }}</span>
+            <span class="tx-desc">{{ description(tx) }}</span>
             <span class="tx-meta">
-              {{ tx.account?.name }} · {{ tx.transaction_date | date: 'mediumDate' }}
+              {{ meta(tx) }} · {{ tx.transaction_date | date: 'mediumDate' }}
             </span>
           </div>
           <div class="tx-right">
@@ -117,8 +118,25 @@ import { AppCurrencyPipe } from '../pipes/app-currency.pipe';
   `,
 })
 export class TransactionListComponent {
-  transactions = input.required<Transaction[]>();
+  transactions = input.required<TransferDisplayTransaction[]>();
   showType = input(true);
   edit = output<Transaction>();
   delete = output<Transaction>();
+
+  trackId(tx: TransferDisplayTransaction): string {
+    return tx.transfer_pair_id ?? tx.id;
+  }
+
+  description(tx: TransferDisplayTransaction): string {
+    return tx.description || tx.category?.name || 'Transfer';
+  }
+
+  meta(tx: TransferDisplayTransaction): string {
+    if (tx.type === 'transfer') {
+      const from = tx.transfer_from_name ?? tx.account?.name ?? 'Account';
+      const to = tx.transfer_to_name;
+      return to ? `${from} → ${to}` : from;
+    }
+    return tx.account?.name ?? 'Account';
+  }
 }

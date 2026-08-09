@@ -1,5 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { startWith } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
@@ -9,9 +11,9 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { AccountService } from '../../features/accounts/account.service';
-import { CategoryService } from '../../features/categories/category.service';
-import { TransactionService } from '../../features/transactions/transaction.service';
+import { AccountService } from '../../modules/finance/accounts/account.service';
+import { CategoryService } from '../../modules/finance/categories/category.service';
+import { TransactionService } from '../../modules/finance/transactions/transaction.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { Transaction, TransactionType } from '../models/transaction.model';
 
@@ -62,6 +64,8 @@ import { Transaction, TransactionType } from '../models/transaction.model';
               optionValue="value"
               placeholder="Select account"
               styleClass="w-full"
+              [filter]="true"
+              filterBy="label"
             />
           </div>
           <div class="field">
@@ -69,11 +73,13 @@ import { Transaction, TransactionType } from '../models/transaction.model';
             <p-select
               inputId="to"
               formControlName="to_account_id"
-              [options]="accountOptions()"
+              [options]="toAccountOptions()"
               optionLabel="label"
               optionValue="value"
               placeholder="Select account"
               styleClass="w-full"
+              [filter]="true"
+              filterBy="label"
             />
           </div>
         } @else {
@@ -87,6 +93,8 @@ import { Transaction, TransactionType } from '../models/transaction.model';
               optionValue="value"
               placeholder="Select account"
               styleClass="w-full"
+              [filter]="true"
+              filterBy="label"
             />
           </div>
           <div class="field">
@@ -99,6 +107,9 @@ import { Transaction, TransactionType } from '../models/transaction.model';
               optionValue="value"
               placeholder="Select category"
               styleClass="w-full"
+              [showClear]="true"
+              [filter]="true"
+              filterBy="label"
             />
           </div>
         }
@@ -181,18 +192,12 @@ export class TransactionFormDialogComponent {
   loadingForm = signal(false);
   private editingId = signal<string | null>(null);
   private editingPairId = signal<string | null>(null);
+  private readonly fromAccountId = signal('');
 
   isEditMode = computed(() => !!this.transaction());
   headerTitle = computed(() =>
     this.isEditMode() ? 'Edit Transaction' : this.dialogTitle(),
   );
-  effectiveType = computed(() => {
-    const fixed = this.fixedType();
-    if (fixed) return fixed;
-    const tx = this.transaction();
-    if (tx) return tx.type;
-    return this.form.value.type ?? 'expense';
-  });
 
   txTypes = [
     { label: 'Income', value: 'income' as TransactionType },
@@ -211,34 +216,87 @@ export class TransactionFormDialogComponent {
     description: [''],
   });
 
+  /** Keeps dialog fields in sync when the type selectbutton changes. */
+  private readonly formType = toSignal(
+    this.form.controls.type.valueChanges.pipe(startWith(this.form.controls.type.value)),
+    { initialValue: this.form.controls.type.value },
+  );
+
+  effectiveType = computed((): TransactionType => {
+    const fixed = this.fixedType();
+    if (fixed) return fixed;
+    const tx = this.transaction();
+    if (tx) return tx.type;
+    return this.formType() ?? 'expense';
+  });
+
+  accountOptions = computed(() => this.accountService.accountSelectOptions());
+
+  toAccountOptions = computed(() => {
+    const fromId = this.fromAccountId();
+    return this.accountOptions().filter((option) => option.value !== fromId);
+  });
+
+  categoryOptions = computed(() => {
+    const type = this.effectiveType();
+    if (type !== 'income' && type !== 'expense') return [];
+    // Touch the categories signal so options refresh after loadCategories().
+    return this.categoryService
+      .byType(type)
+      .map((c) => ({ label: c.name, value: c.id }));
+  });
+
   constructor() {
     effect(() => {
       if (this.visible()) {
-        void this.initForm(this.transaction());
+        void this.openDialog(this.transaction());
+      }
+    });
+
+    this.form.controls.from_account_id.valueChanges.subscribe((value) => {
+      this.fromAccountId.set(value ?? '');
+      const toId = this.form.controls.to_account_id.value;
+      if (value && toId === value) {
+        this.form.controls.to_account_id.setValue('');
+      }
+    });
+
+    this.form.controls.type.valueChanges.subscribe((type) => {
+      if (this.isEditMode()) return;
+      this.form.patchValue(
+        {
+          category_id: '',
+          account_id: type === 'transfer' ? '' : this.form.controls.account_id.value,
+          from_account_id: type === 'transfer' ? this.form.controls.from_account_id.value : '',
+          to_account_id: type === 'transfer' ? this.form.controls.to_account_id.value : '',
+        },
+        { emitEvent: false },
+      );
+      if (type !== 'transfer') {
+        this.fromAccountId.set('');
       }
     });
   }
 
   defaultCurrency = () => this.auth.defaultCurrency();
 
-  accountOptions = () => this.accountService.accountSelectOptions();
-
-  categoryOptions = () => {
-    const type = this.fixedType() ?? this.effectiveType();
-    if (type === 'income' || type === 'expense') {
-      return this.categoryService.byType(type).map((c) => ({ label: c.name, value: c.id }));
-    }
-    return [];
-  };
+  private async openDialog(tx: Transaction | null | undefined): Promise<void> {
+    this.loadingForm.set(true);
+    await Promise.all([
+      this.accountService.loadAccounts(),
+      this.categoryService.loadCategories(),
+    ]);
+    await this.initForm(tx);
+    this.loadingForm.set(false);
+  }
 
   private async initForm(tx: Transaction | null | undefined): Promise<void> {
-    this.loadingForm.set(true);
     this.editingId.set(null);
     this.editingPairId.set(null);
+    this.fromAccountId.set('');
 
     if (!tx) {
       this.resetForm();
-      this.loadingForm.set(false);
       return;
     }
 
@@ -248,6 +306,7 @@ export class TransactionFormDialogComponent {
       this.editingPairId.set(tx.transfer_pair_id);
       const legs = await this.transactionService.getTransferLegs(tx.transfer_pair_id);
       if (legs) {
+        this.fromAccountId.set(legs.from_account_id);
         this.form.reset({
           type: 'transfer',
           account_id: '',
@@ -271,12 +330,11 @@ export class TransactionFormDialogComponent {
         description: tx.description ?? '',
       });
     }
-
-    this.loadingForm.set(false);
   }
 
   resetForm(): void {
     const type = this.fixedType() ?? 'expense';
+    this.fromAccountId.set('');
     this.form.reset({
       type,
       account_id: '',
@@ -294,10 +352,20 @@ export class TransactionFormDialogComponent {
   }
 
   async save(): Promise<void> {
-    const type = this.fixedType() ?? (this.isEditMode() ? this.transaction()!.type : this.form.value.type);
+    if (this.saving() || this.loadingForm()) return;
+
+    const type = this.effectiveType();
     if (type === 'transfer') {
       const { from_account_id, to_account_id } = this.form.getRawValue();
       if (!from_account_id || !to_account_id) return;
+      if (from_account_id === to_account_id) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Invalid transfer',
+          detail: 'Choose two different accounts',
+        });
+        return;
+      }
     } else if (!this.form.getRawValue().account_id) {
       return;
     }
@@ -306,7 +374,7 @@ export class TransactionFormDialogComponent {
     this.saving.set(true);
 
     const raw = this.form.getRawValue();
-    const saveType = this.fixedType() ?? (this.isEditMode() ? this.transaction()!.type : raw.type);
+    const saveType = type;
     const date =
       raw.transaction_date instanceof Date
         ? raw.transaction_date.toISOString().split('T')[0]
