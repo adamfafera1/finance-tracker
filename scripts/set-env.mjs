@@ -7,7 +7,9 @@ const target = join(__dirname, '../src/environments/environment.ts');
 
 const supabaseUrl = process.env.SUPABASE_URL?.trim() ?? '';
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY?.trim() ?? '';
-const primeui = process.env.PRIMEUI_LICENSE?.trim() ?? '';
+// Prefer PRIMEUI_LICENSE; accept PRIMEUI for existing Vercel env names.
+const primeui =
+  process.env.PRIMEUI_LICENSE?.trim() || process.env.PRIMEUI?.trim() || '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error(

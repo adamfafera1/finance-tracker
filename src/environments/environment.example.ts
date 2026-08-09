@@ -11,4 +11,4 @@ export const environment = {
 // Vercel / CI environment variables:
 //   SUPABASE_URL
 //   SUPABASE_ANON_KEY
-//   PRIMEUI_LICENSE (optional)
+//   PRIMEUI_LICENSE (or PRIMEUI) — optional but required to silence invalid-license warnings
