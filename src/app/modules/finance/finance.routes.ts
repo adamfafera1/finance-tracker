@@ -13,6 +13,16 @@ export const financeRoutes: Routes = [
       import('./accounts/accounts.component').then((m) => m.AccountsComponent),
   },
   {
+    path: 'goals',
+    loadComponent: () =>
+      import('./goals/goals.component').then((m) => m.SavingGoalsComponent),
+  },
+  {
+    path: 'shopping',
+    loadComponent: () =>
+      import('./shopping/shopping.component').then((m) => m.ShoppingListComponent),
+  },
+  {
     path: 'transactions',
     loadComponent: () =>
       import('./transactions/transactions.component').then((m) => m.TransactionsComponent),

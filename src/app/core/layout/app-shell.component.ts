@@ -345,6 +345,8 @@ export class AppShellComponent {
     { label: 'Recurring', icon: 'pi pi-refresh', route: '/finance/recurring' },
     { label: 'Transactions', icon: 'pi pi-list', route: '/finance/transactions' },
     { label: 'Accounts', icon: 'pi pi-building-columns', route: '/finance/accounts' },
+    { label: 'Goals', icon: 'pi pi-flag', route: '/finance/goals' },
+    { label: 'Shopping', icon: 'pi pi-shopping-cart', route: '/finance/shopping' },
     { label: 'Reports', icon: 'pi pi-chart-pie', route: '/finance/reports' },
   ];
 

@@ -1,13 +1,17 @@
-import { Component, computed, inject, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { ChartModule } from 'primeng/chart';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DashboardService } from '../dashboard/dashboard.service';
-import { TransactionService } from '../transactions/transaction.service';
+import { SavingGoalService } from '../goals/saving-goal.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ThemeService } from '../../../core/theme/theme.service';
 import { AppCurrencyPipe } from '../../../shared/pipes/app-currency.pipe';
 import { EmptyStateComponent } from '../../../shared/components/empty-state.component';
+import { SavingGoal, savingGoalProgress } from '../../../shared/models/saving-goal.model';
 import {
   chartLayoutPadding,
   formatChartCurrency,
@@ -17,7 +21,16 @@ import {
 
 @Component({
   selector: 'app-reports',
-  imports: [CardModule, ChartModule, ProgressSpinnerModule, AppCurrencyPipe, EmptyStateComponent],
+  imports: [
+    RouterLink,
+    ButtonModule,
+    CardModule,
+    ChartModule,
+    ProgressBarModule,
+    ProgressSpinnerModule,
+    AppCurrencyPipe,
+    EmptyStateComponent,
+  ],
   template: `
     <div class="page-header">
       <h1>Reports</h1>
@@ -25,70 +38,109 @@ import {
 
     @if (loading()) {
       <div class="loading-center"><p-progressspinner ariaLabel="Loading reports" /></div>
-    } @else if (!hasReportData()) {
+    } @else if (!hasTxnData() && !hasGoals()) {
       <app-empty-state
         icon="pi pi-chart-pie"
         title="No report data yet"
-        message="Add income and expense transactions to see spending breakdown and trends."
+        message="Add income and expense transactions or saving goals to see reports."
       />
     } @else {
-      <div class="stat-grid">
-        <p-card styleClass="stat-card">
-          <p class="label">Income This Month</p>
-          <p class="value positive">{{ dashboard.monthlySummary().income | appCurrency }}</p>
-        </p-card>
-        <p-card styleClass="stat-card">
-          <p class="label">Spending This Month</p>
-          <p class="value negative">{{ dashboard.monthlySummary().expenses | appCurrency }}</p>
-        </p-card>
-        <p-card styleClass="stat-card">
-          <p class="label">Net This Month</p>
-          <p
-            class="value"
-            [class.positive]="dashboard.monthlySummary().net >= 0"
-            [class.negative]="dashboard.monthlySummary().net < 0"
-          >
-            {{ dashboard.monthlySummary().net | appCurrency }}
-          </p>
-        </p-card>
-      </div>
+      @if (hasTxnData()) {
+        <div class="stat-grid">
+          <p-card styleClass="stat-card">
+            <p class="label">Income This Month</p>
+            <p class="value positive">{{ dashboard.monthlySummary().income | appCurrency }}</p>
+          </p-card>
+          <p-card styleClass="stat-card">
+            <p class="label">Spending This Month</p>
+            <p class="value negative">{{ dashboard.monthlySummary().expenses | appCurrency }}</p>
+          </p-card>
+          <p-card styleClass="stat-card">
+            <p class="label">Net This Month</p>
+            <p
+              class="value"
+              [class.positive]="dashboard.monthlySummary().net >= 0"
+              [class.negative]="dashboard.monthlySummary().net < 0"
+            >
+              {{ dashboard.monthlySummary().net | appCurrency }}
+            </p>
+          </p-card>
+        </div>
+      }
 
       <div class="charts-grid">
-        <p-card styleClass="chart-card">
-          <div class="chart-panel">
-            <div class="card-heading">
-              <span class="card-title">Spending by Category</span>
-              <span class="card-subtitle">This month</span>
-            </div>
-
-            @if (dashboard.spendingByCategory().length === 0) {
-              <div class="chart-empty">
-                <i class="pi pi-chart-pie" aria-hidden="true"></i>
-                <p>No expenses recorded this month</p>
+        @if (hasTxnData()) {
+          <p-card styleClass="chart-card">
+            <div class="chart-panel">
+              <div class="card-heading">
+                <span class="card-title">Spending by Category</span>
+                <span class="card-subtitle">This month</span>
               </div>
-            } @else {
-              <div class="chart-wrap chart-wrap--doughnut">
-                <p-chart type="doughnut" [data]="categoryChartData()" [options]="doughnutOptions()" />
+
+              @if (dashboard.spendingByCategory().length === 0) {
+                <div class="chart-empty">
+                  <i class="pi pi-chart-pie" aria-hidden="true"></i>
+                  <p>No expenses recorded this month</p>
+                </div>
+              } @else {
+                <div class="chart-wrap chart-wrap--doughnut">
+                  <p-chart type="doughnut" [data]="categoryChartData()" [options]="doughnutOptions()" />
+                </div>
+              }
+            </div>
+          </p-card>
+
+          <p-card styleClass="chart-card">
+            <div class="chart-panel">
+              <div class="card-heading">
+                <span class="card-title">Income & Spending Trend</span>
+                <span class="card-subtitle">Last 6 months</span>
               </div>
-            }
-          </div>
-        </p-card>
 
-        <p-card styleClass="chart-card">
-          <div class="chart-panel">
-            <div class="card-heading">
-              <span class="card-title">Income & Spending Trend</span>
-              <span class="card-subtitle">Last 6 months</span>
+              <div class="chart-wrap chart-wrap--line">
+                <p-chart type="line" [data]="trendChartData()" [options]="lineOptions()" />
+              </div>
             </div>
+          </p-card>
+        }
 
-            <div class="chart-wrap chart-wrap--line">
-              <p-chart type="line" [data]="trendChartData()" [options]="lineOptions()" />
+        @if (hasGoals()) {
+          <p-card styleClass="chart-card">
+            <div class="chart-panel">
+              <div class="card-heading card-heading--row">
+                <div>
+                  <span class="card-title">Saving Goals</span>
+                  <span class="card-subtitle">Top {{ topGoals().length }}</span>
+                </div>
+                <a routerLink="/finance/goals" pButton variant="text" size="small">Manage</a>
+              </div>
+
+              <div class="goals-list">
+                @for (goal of topGoals(); track goal.id) {
+                  <div class="goal-row">
+                    <div class="goal-row-top">
+                      <span class="goal-name">{{ goal.name }}</span>
+                      <span class="goal-pct">{{ progress(goal) }}%</span>
+                    </div>
+                    <p-progressbar
+                      [value]="progress(goal)"
+                      [showValue]="false"
+                      [style]="{ height: '0.5rem' }"
+                    />
+                    <p class="goal-amounts">
+                      {{ goal.current_amount | appCurrency: goal.currency }}
+                      of
+                      {{ goal.target_amount | appCurrency: goal.currency }}
+                    </p>
+                  </div>
+                }
+              </div>
             </div>
-          </div>
-        </p-card>
+          </p-card>
+        }
       </div>
 
-      @if (dashboard.spendingByCategory().length > 0) {
+      @if (hasTxnData() && dashboard.spendingByCategory().length > 0) {
         <p-card styleClass="breakdown-card">
           <div class="chart-panel">
             <div class="card-heading">
@@ -97,22 +149,22 @@ import {
             </div>
 
             <div class="breakdown-list">
-            @for (item of dashboard.spendingByCategory(); track item.name) {
-              <div class="breakdown-item">
-                <span class="breakdown-name">
-                  <span class="dot" [style.background]="item.color ?? 'var(--p-primary-color)'"></span>
-                  {{ item.name }}
-                </span>
-                <div class="breakdown-bar-wrap">
-                  <div
-                    class="breakdown-bar"
-                    [style.width.%]="categoryShare(item.amount)"
-                    [style.background]="item.color ?? 'var(--p-primary-color)'"
-                  ></div>
+              @for (item of dashboard.spendingByCategory(); track item.name) {
+                <div class="breakdown-item">
+                  <span class="breakdown-name">
+                    <span class="dot" [style.background]="item.color ?? 'var(--p-primary-color)'"></span>
+                    {{ item.name }}
+                  </span>
+                  <div class="breakdown-bar-wrap">
+                    <div
+                      class="breakdown-bar"
+                      [style.width.%]="categoryShare(item.amount)"
+                      [style.background]="item.color ?? 'var(--p-primary-color)'"
+                    ></div>
+                  </div>
+                  <span class="breakdown-amount">{{ item.amount | appCurrency }}</span>
                 </div>
-                <span class="breakdown-amount">{{ item.amount | appCurrency }}</span>
-              </div>
-            }
+              }
             </div>
           </div>
         </p-card>
@@ -141,6 +193,19 @@ import {
       flex-direction: column;
       gap: 0.25rem;
       margin-bottom: 1.25rem;
+    }
+
+    .card-heading--row {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .card-heading--row > div {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
     }
 
     .card-title {
@@ -250,6 +315,42 @@ import {
       white-space: nowrap;
     }
 
+    .goals-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.125rem;
+      min-height: 12rem;
+    }
+
+    .goal-row-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.75rem;
+      margin-bottom: 0.375rem;
+    }
+
+    .goal-name {
+      font-size: 0.875rem;
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    .goal-pct {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--p-primary-color);
+      flex-shrink: 0;
+    }
+
+    .goal-amounts {
+      margin: 0.375rem 0 0;
+      font-size: 0.75rem;
+      color: var(--p-text-muted-color);
+      font-variant-numeric: tabular-nums;
+    }
+
     @media (max-width: 640px) {
       .breakdown-item {
         grid-template-columns: 1fr auto;
@@ -264,14 +365,15 @@ import {
 })
 export class ReportsComponent implements OnInit {
   protected readonly dashboard = inject(DashboardService);
-  private readonly transactionService = inject(TransactionService);
+  protected readonly goalService = inject(SavingGoalService);
   private readonly auth = inject(AuthService);
   private readonly theme = inject(ThemeService);
 
-  loading = () =>
-    this.dashboard.accounts().length === 0 && this.transactionService.loading();
+  private readonly pageLoading = signal(true);
 
-  hasReportData = computed(() => {
+  loading = () => this.pageLoading();
+
+  hasTxnData = computed(() => {
     this.theme.isDark();
     const summary = this.dashboard.monthlySummary();
     const trend = this.dashboard.monthlyTrend();
@@ -281,6 +383,15 @@ export class ReportsComponent implements OnInit {
       trend.some((m) => m.income > 0 || m.expenses > 0)
     );
   });
+
+  hasGoals = computed(() => this.goalService.goals().length > 0);
+
+  /** Up to 3 goals, nearest completion first. */
+  topGoals = computed(() =>
+    [...this.goalService.goals()]
+      .sort((a, b) => savingGoalProgress(b) - savingGoalProgress(a))
+      .slice(0, 3),
+  );
 
   private themeColors = computed(() => readChartThemeColors(this.theme.isDark()));
 
@@ -441,6 +552,10 @@ export class ReportsComponent implements OnInit {
     };
   });
 
+  progress(goal: SavingGoal): number {
+    return savingGoalProgress(goal);
+  }
+
   categoryShare(amount: number): number {
     const total = this.dashboard.spendingByCategory().reduce((sum, item) => sum + item.amount, 0);
     if (total <= 0) return 0;
@@ -453,7 +568,9 @@ export class ReportsComponent implements OnInit {
     return formatChartCurrency(value, currency);
   }
 
-  ngOnInit(): void {
-    this.dashboard.refresh();
+  async ngOnInit(): Promise<void> {
+    this.pageLoading.set(true);
+    await Promise.all([this.dashboard.refresh(), this.goalService.loadGoals()]);
+    this.pageLoading.set(false);
   }
 }
