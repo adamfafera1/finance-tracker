@@ -76,11 +76,35 @@ interface NavItem {
         </div>
       </aside>
 
-      <main class="main-content">
-        <router-outlet />
+      <main class="main-content" [class.has-module-subnav]="showModuleSubnav()">
+        @if (inFinance()) {
+          <nav class="module-subnav" aria-label="Finance sections">
+            @for (item of financeNav; track item.route) {
+              <a [routerLink]="item.route" routerLinkActive="active" class="subnav-link">
+                <i [class]="item.icon" aria-hidden="true"></i>
+                <span>{{ item.label }}</span>
+              </a>
+            }
+          </nav>
+        }
+
+        @if (inTodo()) {
+          <nav class="module-subnav" aria-label="Task sections">
+            @for (item of todoNav; track item.route) {
+              <a [routerLink]="item.route" routerLinkActive="active" class="subnav-link">
+                <i [class]="item.icon" aria-hidden="true"></i>
+                <span>{{ item.label }}</span>
+              </a>
+            }
+          </nav>
+        }
+
+        <div class="page-content">
+          <router-outlet />
+        </div>
       </main>
 
-      <nav class="bottom-nav" [class.with-subnav]="showModuleSubnav()">
+      <nav class="bottom-nav">
         @for (item of primaryNav; track item.route) {
           <a
             [routerLink]="item.route"
@@ -93,26 +117,6 @@ interface NavItem {
           </a>
         }
       </nav>
-
-      @if (inFinance()) {
-        <nav class="module-subnav" aria-label="Finance sections">
-          @for (item of financeNav; track item.route) {
-            <a [routerLink]="item.route" routerLinkActive="active" class="subnav-link">
-              {{ item.label }}
-            </a>
-          }
-        </nav>
-      }
-
-      @if (inTodo()) {
-        <nav class="module-subnav" aria-label="Task sections">
-          @for (item of todoNav; track item.route) {
-            <a [routerLink]="item.route" routerLinkActive="active" class="subnav-link">
-              {{ item.label }}
-            </a>
-          }
-        </nav>
-      }
     </div>
   `,
   styles: `
@@ -210,13 +214,69 @@ interface NavItem {
     .main-content {
       flex: 1;
       min-width: 0;
-      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
       padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
       background: var(--p-surface-50);
     }
 
     :host-context(.app-dark) .main-content {
       background: var(--p-surface-950);
+    }
+
+    .module-subnav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      gap: 0.375rem;
+      overflow-x: auto;
+      background: var(--p-content-background);
+      border-bottom: 1px solid var(--p-content-border-color);
+      padding: 0.625rem 0.75rem;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .module-subnav::-webkit-scrollbar {
+      display: none;
+    }
+
+    .subnav-link {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 0.875rem;
+      border-radius: 999px;
+      font-size: 0.8125rem;
+      color: var(--p-text-muted-color);
+      text-decoration: none;
+      white-space: nowrap;
+      border: 1px solid var(--p-content-border-color);
+      background: transparent;
+    }
+
+    .subnav-link i {
+      font-size: 0.875rem;
+    }
+
+    .subnav-link.active {
+      background: var(--p-primary-50);
+      border-color: var(--p-primary-color);
+      color: var(--p-primary-color);
+      font-weight: 600;
+    }
+
+    :host-context(.app-dark) .subnav-link.active {
+      background: color-mix(in srgb, var(--p-primary-color) 15%, transparent);
+    }
+
+    .page-content {
+      flex: 1;
+      min-width: 0;
+      padding: 1rem;
     }
 
     .bottom-nav {
@@ -230,10 +290,6 @@ interface NavItem {
       border-top: 1px solid var(--p-content-border-color);
       padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
       z-index: 100;
-    }
-
-    .bottom-nav.with-subnav {
-      padding-bottom: calc(2.75rem + 0.5rem + env(safe-area-inset-bottom));
     }
 
     .bottom-link {
@@ -257,46 +313,6 @@ interface NavItem {
       font-weight: 500;
     }
 
-    .module-subnav {
-      position: fixed;
-      bottom: calc(3.25rem + env(safe-area-inset-bottom));
-      left: 0;
-      right: 0;
-      display: flex;
-      gap: 0.25rem;
-      overflow-x: auto;
-      background: var(--p-content-background);
-      border-top: 1px solid var(--p-content-border-color);
-      padding: 0.375rem 0.75rem;
-      z-index: 99;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .subnav-link {
-      flex-shrink: 0;
-      padding: 0.375rem 0.75rem;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      color: var(--p-text-muted-color);
-      text-decoration: none;
-      white-space: nowrap;
-    }
-
-    .subnav-link.active {
-      background: var(--p-primary-50);
-      color: var(--p-primary-color);
-      font-weight: 500;
-    }
-
-    :host-context(.app-dark) .subnav-link.active {
-      background: color-mix(in srgb, var(--p-primary-color) 15%, transparent);
-    }
-
-    .main-content:has(+ .module-subnav),
-    .shell:has(.module-subnav) .main-content {
-      padding-bottom: calc(7rem + env(safe-area-inset-bottom));
-    }
-
     @media (min-width: 768px) {
       .sidebar {
         display: flex;
@@ -308,8 +324,12 @@ interface NavItem {
       }
 
       .main-content {
+        padding: 0;
+        padding-bottom: 0;
+      }
+
+      .page-content {
         padding: 1.5rem 2rem;
-        padding-bottom: 1.5rem;
       }
     }
   `,
